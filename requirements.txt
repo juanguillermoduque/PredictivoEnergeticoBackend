@@ -1,0 +1,34 @@
+# Django & REST framework
+Django==5.0.2
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+
+# Data Science & Machine Learning
+numpy==2.2.5
+pandas==2.2.3
+scikit-learn==1.6.1
+matplotlib==3.10.1
+plotly==6.0.1
+scipy>=1.11.0
+
+# API & Web
+aiohttp==3.11.14
+requests==2.32.3
+pydataxm==0.3.13
+
+# Utilities
+python-dotenv==1.1.0
+joblib==1.4.2
+python-dateutil>=2.9.0
+pytz==2025.2
+pillow==11.1.0
+
+# Development & Debug
+ipython==8.34.0
+jupyter_core==5.7.2
+ipykernel==6.29.5
+
+# Additional Dependencies
+contourpy==1.3.1
+cycler==0.12.1
+kiwisolver==1.4.8
