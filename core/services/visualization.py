@@ -9,7 +9,6 @@ class VisualizationService:
         self.colors = {
             'demanda_real': '#1f77b4',
             'generacion_total': '#2ca02c',
-            'precio_bolsa': '#ff7f0e',
             'prediccion': '#d62728'
         }
 

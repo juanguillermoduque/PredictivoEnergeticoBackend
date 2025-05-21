@@ -50,8 +50,7 @@ class XMDataViewSet(viewsets.ModelViewSet):
             XMData.objects.create(
                 fecha=row['fecha'],
                 demanda_real=row['demanda_real'],
-                generacion_total=row['generacion_total'],
-                precio_bolsa=row['precio_bolsa']
+                generacion_total=row['generacion_total']
             )
 
         return Response({'message': 'Datos obtenidos y guardados correctamente'})
@@ -80,31 +79,15 @@ class XMDataViewSet(viewsets.ModelViewSet):
                     "error": "start_date and end_date are required",
                     "suggestion": f"Try using date range: {suggested_start_date} to {suggested_end_date}"
                 }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Primero intentar obtener datos de la base de datos
-            queryset = self.queryset.filter(
-                fecha__gte=start_date,
-                fecha__lte=end_date
-            ).order_by('fecha')
-
-            if queryset.exists():
-                data = pd.DataFrame(list(queryset.values()))
-            else:
-                # Si no hay datos en la BD, intentar obtenerlos de la API
-                data = self.xm_service.get_all_data(start_date, end_date)
-                if data is None:
-                    return Response(
-                        {"error": "No data available for the specified date range"}, 
-                        status=status.HTTP_404_NOT_FOUND
-                    )
-                # Guardar los datos obtenidos en la BD
-                for _, row in data.iterrows():
-                    XMData.objects.create(
-                        fecha=row['fecha'],
-                        demanda_real=row['demanda_real'],
-                        generacion_total=row['generacion_total'],
-                        precio_bolsa=row['precio_bolsa']
-                    )
+            
+            
+            # Si no hay datos en la BD, intentar obtenerlos de la API
+            data = self.xm_service.get_all_data(start_date, end_date)
+            if data is None:
+                return Response(
+                    {"error": "No data available for the specified date range"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
             visualization_methods = {
                 'heatmap': self.visualization_service.create_heatmap,

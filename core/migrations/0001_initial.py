@@ -33,7 +33,6 @@ class Migration(migrations.Migration):
                 ('fecha', models.DateTimeField()),
                 ('demanda_real', models.FloatField()),
                 ('generacion_total', models.FloatField()),
-                ('precio_bolsa', models.FloatField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],

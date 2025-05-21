@@ -18,5 +18,5 @@ class DateRangeSerializer(serializers.Serializer):
 class PredictionRequestSerializer(serializers.Serializer):
     start_date = serializers.DateTimeField()
     end_date = serializers.DateTimeField()
-    target_column = serializers.ChoiceField(choices=['demanda_real', 'generacion_total', 'precio_bolsa'])
+    target_column = serializers.ChoiceField(choices=['demanda_real', 'generacion_total'])
     steps_ahead = serializers.IntegerField(min_value=1, max_value=168, default=24) 

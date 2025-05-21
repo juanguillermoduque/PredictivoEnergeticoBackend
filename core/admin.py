@@ -3,7 +3,7 @@ from .models import XMData, Prediction
 
 @admin.register(XMData)
 class XMDataAdmin(admin.ModelAdmin):
-    list_display = ('fecha', 'demanda_real', 'generacion_total', 'precio_bolsa', 'created_at')
+    list_display = ('fecha', 'demanda_real', 'generacion_total', 'created_at')
     list_filter = ('fecha',)
     search_fields = ('fecha',)
     ordering = ('-fecha',)
