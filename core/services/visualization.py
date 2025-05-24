@@ -37,7 +37,7 @@ class VisualizationService:
 
         return json.dumps(fig.to_dict())
 
-    def create_prediction_comparison(self, historical_data, predictions, target_column):
+    def create_prediction_comparison(self, historical_data, predictions):
         """
         Crea una gráfica comparando datos históricos con predicciones
         """
@@ -46,23 +46,18 @@ class VisualizationService:
         # Datos históricos
         fig.add_trace(go.Scatter(
             x=historical_data['fecha'],
-            y=historical_data[target_column],
             name='Datos Históricos',
-            line=dict(color=self.colors[target_column])
         ))
 
         # Predicciones
         fig.add_trace(go.Scatter(
             x=predictions['fecha'],
-            y=predictions[f'prediccion_{target_column}'],
             name='Predicciones',
             line=dict(color=self.colors['prediccion'], dash='dash')
         ))
 
         fig.update_layout(
-            title=f'Predicción de {target_column}',
             xaxis_title='Fecha',
-            yaxis_title=target_column,
             template='plotly_white',
             hovermode='x unified'
         )
@@ -134,7 +129,7 @@ class VisualizationService:
 
         return json.dumps(fig.to_dict())
 
-    def create_forecast_plot(self, historical_data, predictions, target_column, confidence_interval=None):
+    def create_forecast_plot(self, historical_data, predictions, confidence_interval=None):
         """
         Crea una gráfica de pronóstico con intervalo de confianza
         """
@@ -143,15 +138,12 @@ class VisualizationService:
         # Datos históricos
         fig.add_trace(go.Scatter(
             x=historical_data['fecha'],
-            y=historical_data[target_column],
             name='Datos Históricos',
-            line=dict(color=self.colors[target_column])
         ))
 
         # Predicciones
         fig.add_trace(go.Scatter(
             x=predictions['fecha'],
-            y=predictions[f'prediccion_{target_column}'],
             name='Predicciones',
             line=dict(color=self.colors['prediccion'])
         ))
@@ -176,9 +168,7 @@ class VisualizationService:
             ))
 
         fig.update_layout(
-            title=f'Pronóstico de {target_column}',
             xaxis_title='Fecha',
-            yaxis_title=target_column,
             template='plotly_white',
             hovermode='x unified'
         )

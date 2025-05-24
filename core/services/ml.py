@@ -25,27 +25,10 @@ class MLService:
             'svr': SVR(kernel='rbf')
         }
 
-    def prepare_data(self, df, target_column, sequence_length=24):
-        """
-        Prepara los datos para el modelo de predicción
-        """
-        # Normalizar datos
-        scaler = MinMaxScaler()
-        scaled_data = scaler.fit_transform(df[[target_column]])
-        
-        # Crear secuencias
-        X, y = [], []
-        for i in range(len(scaled_data) - sequence_length):
-            X.append(scaled_data[i:(i + sequence_length)])
-            y.append(scaled_data[i + sequence_length])
-        
-        return np.array(X), np.array(y), scaler
-
-    def train_model(self, df, target_column, model_name, model_type='random_forest'):
+    def train_model(self, df, model_name, model_type='random_forest'):
         """
         Entrena el modelo de predicción
         """
-        X, y, scaler = self.prepare_data(df, target_column)
         
         # Dividir datos
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -77,7 +60,7 @@ class MLService:
             'model_type': model_type
         }
 
-    def predict(self, df, target_column, model_name, steps_ahead=24):
+    def predict(self, df, model_name):
         """
         Realiza predicciones usando el modelo entrenado
         """
@@ -94,40 +77,22 @@ class MLService:
 
         # Preparar datos
         scaler = self.scalers[model_name]
-        scaled_data = scaler.transform(df[[target_column]])
         
         # Realizar predicciones
         predictions = []
-        current_sequence = scaled_data[-24:].reshape(1, -1)
-        
-        for _ in range(steps_ahead):
-            pred = self.models[model_name].predict(current_sequence)
-            predictions.append(pred[0])
-            current_sequence = np.roll(current_sequence, -1)
-            current_sequence[0, -1] = pred[0]
         
         # Invertir normalización
         predictions = scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
         
-        # Crear DataFrame con fechas y predicciones
-        last_date = df.index[-1]
-        future_dates = [last_date + timedelta(hours=i+1) for i in range(steps_ahead)]
-        
-        predictions_df = pd.DataFrame({
-            'fecha': future_dates,
-            f'prediccion_{target_column}': predictions.flatten()
-        })
-        
-        return predictions_df
+        return predictions
 
-    def evaluate_model(self, df, target_column, model_name):
+    def evaluate_model(self, df, model_name):
         """
         Evalúa el rendimiento del modelo
         """
         if model_name not in self.models:
             raise ValueError(f"Modelo {model_name} no encontrado")
         
-        X, y, _ = self.prepare_data(df, target_column)
         X = X.reshape(X.shape[0], -1)
         
         predictions = self.models[model_name].predict(X)
@@ -161,20 +126,20 @@ class MLService:
             'feature_importance': feature_importance.tolist() if feature_importance is not None else None
         }
 
-    def compare_models(self, df, target_column, steps_ahead=24):
+    def compare_models(self, df):
         """
         Compara diferentes modelos y retorna sus métricas
         """
         results = {}
         
         for model_type in self.available_models.keys():
-            model_name = f"{target_column}_{model_type}"
+            model_name = f""
             try:
                 # Entrenar modelo
-                metrics = self.train_model(df, target_column, model_name, model_type)
+                metrics = self.train_model(df, model_name, model_type)
                 
                 # Realizar predicciones
-                predictions = self.predict(df, target_column, model_name, steps_ahead)
+                predictions = self.predict(df, model_name)
                 
                 results[model_type] = {
                     'metrics': metrics,

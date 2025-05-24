@@ -17,6 +17,7 @@ from .services.xm_api import XMService
 from .services.ml import MLService
 from .services.visualization import VisualizationService
 from .services.visualization_service import VisualizationService
+from .services.prediction_service import PredictionService
 
 class XMDataViewSet(viewsets.ModelViewSet):
     queryset = XMData.objects.all()
@@ -90,9 +91,22 @@ class XMDataViewSet(viewsets.ModelViewSet):
                 )
 
             visualization_methods = {
-                'heatmap': self.visualization_service.create_heatmap,
-                'daily': self.visualization_service.create_daily_demand,
-                'hourly': self.visualization_service.create_hourly_average
+                'outler': self.visualization_service.create_outliers,
+                'coolwarm': self.visualization_service.create_coolwarm,
+                'demanda_real_vs_z_score': self.visualization_service.create_demanda_real_vs_z_score,
+                'box_plot': self.visualization_service.create_box_plot,
+                'histogram': self.visualization_service.create_histograma,
+                'warm_map': self.visualization_service.create_warm_map,
+                'acumilativo_demanda_horaria': self.visualization_service.create_acumilativo_demanda_horaria,
+                'line_demanda_promedio': self.visualization_service.create_line_demanda_promedio,
+                'barras_demanda_promedio_hora': self.visualization_service.create_barras_demanda_promedio,
+                'barras_demanda_promedio_mes': self.visualization_service.create_barras_demanda_promedio_mes,
+                'barras_demanda_promedio_dia': self.visualization_service.create_barras_demanda_promedio_dia,
+                'barras_demanda_promedio_anio': self.visualization_service.create_barras_demanda_promedio_anio,
+                'barras_acumulado_promedio_anio_mes': self.visualization_service.create_barras_acumulado_promedio_anio_mes,
+                'dispersion_horaria': self.visualization_service.create_dispersion_horaria,
+                'historico_minimo_maximo': self.visualization_service.create_historico_minimo_maximo,
+
             }
 
             if chart_type not in visualization_methods:
@@ -177,59 +191,26 @@ class PredictionViewSet(viewsets.ModelViewSet):
 
         start_date = serializer.validated_data['start_date']
         end_date = serializer.validated_data['end_date']
-        target_column = serializer.validated_data['target_column']
-        steps_ahead = serializer.validated_data['steps_ahead']
-        model_type = request.data.get('model_type', 'random_forest')
 
         # Obtener datos históricos
         xm_service = XMService()
-        data = xm_service.get_all_data(start_date, end_date)
+        data = xm_service.get_all_data("2022-01-01", "2024-12-31")
 
         if data is None:
             return Response(
                 {'error': 'No se pudieron obtener los datos históricos'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+        # llamar al servicio de predicción
+        prediction_service = PredictionService()
+        normalized_data = prediction_service.normalize_data(data)
+        prediction_service.create_modelos_dl(normalized_data)
+        prediction_service.generate_models()
+        base_64 =  prediction_service.predict(normalized_data, start_date, end_date)
+        return Response(base_64)
 
-        # Entrenar modelo y hacer predicciones
-        ml_service = MLService()
-        model_name = f"{target_column}_{model_type}"
-        
-        try:
-            # Entrenar modelo
-            metrics = ml_service.train_model(data, target_column, model_name, model_type)
-            
-            # Realizar predicciones
-            predictions = ml_service.predict(data, target_column, model_name, steps_ahead)
-            
-            # Crear visualización
-            viz_service = VisualizationService()
-            plot_data = viz_service.create_prediction_comparison(
-                data,
-                predictions,
-                target_column
-            )
-            
-            # Guardar predicciones
-            for _, row in predictions.iterrows():
-                Prediction.objects.create(
-                    fecha=row['fecha'],
-                    valor_predicho=row[f'prediccion_{target_column}'],
-                    tipo_prediccion=target_column
-                )
-
-            return Response({
-                'message': 'Predicciones realizadas correctamente',
-                'metrics': metrics,
-                'predictions': predictions.to_dict(orient='records'),
-                'plot_data': plot_data
-            })
-
-        except Exception as e:
-            return Response(
-                {'error': f'Error al realizar predicciones: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+       
 
     @action(detail=False, methods=['get'])
     def get_latest_predictions(self, request):
@@ -239,7 +220,7 @@ class PredictionViewSet(viewsets.ModelViewSet):
         if tipo_prediccion:
             queryset = queryset.filter(tipo_prediccion=tipo_prediccion)
 
-        queryset = queryset.order_by('-fecha')[:24]  # Últimas 24 predicciones
+        queryset = queryset.order_by('-fecha')[:24]
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -254,8 +235,6 @@ class PredictionViewSet(viewsets.ModelViewSet):
 
         start_date = serializer.validated_data['start_date']
         end_date = serializer.validated_data['end_date']
-        target_column = serializer.validated_data['target_column']
-        steps_ahead = serializer.validated_data['steps_ahead']
 
         # Obtener datos históricos
         xm_service = XMService()
@@ -269,7 +248,7 @@ class PredictionViewSet(viewsets.ModelViewSet):
 
         # Comparar modelos
         ml_service = MLService()
-        results = ml_service.compare_models(data, target_column, steps_ahead)
+        results = ml_service.compare_models(data)
 
         return Response({
             'message': 'Comparación de modelos realizada correctamente',

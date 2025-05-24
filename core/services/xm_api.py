@@ -4,8 +4,6 @@ import numpy as np
 import datetime as dt
 import calendar
 import json
-import matplotlib.pyplot as plt
-import seaborn as sns 
 
 class XMService:
     def __init__(self):
